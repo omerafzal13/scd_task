@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      volumes:
+        - name: shared-logs
+          emptyDir: {}
+      initContainers:
+        - name: init-backend
+          image: busybox
+          command: ["sh", "-c", "echo Initializing Backend... && sleep 10"]
+      containers:
+        - name: backend
+          image: ismailza/mern-stack-app-backend:1.0.1
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_URI
+              value: mongodb://mongo:27017/mernapp
+            - name: APP_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: APP_MODE
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: DB_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: DB_PASS
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log/shared
+        - name: log-sidecar
+          image: busybox
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          command: ["sh", "-c", "while true; do date >> /var/log/shared/app.log; sleep 5; done"]
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /var/log/shared

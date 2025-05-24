@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  frontend:
+    image: ismailza/mern-stack-app-frontend:latest
+    deploy:
+      replicas: 2
+    ports:
+      - "30173:5173"
+    depends_on:
+      - backend
+  backend:
+    image: ismailza/mern-stack-app-backend:latest
+    deploy:
+      replicas: 2
+    ports:
+      - "30300:3000"
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo:latest
+    deploy:
+      replicas: 1
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+volumes:
+  mongo-data:
+    driver: local

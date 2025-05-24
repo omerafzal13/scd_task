@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      volumes:
+        - name: frontend-storage
+          persistentVolumeClaim:
+            claimName: frontend-pvc
+      initContainers:
+        - name: init-html
+          image: busybox
+          command: ["sh", "-c", "echo '<h1>Hello this is omer!</h1>' > /usr/share/nginx/html/index.html"]
+          volumeMounts:
+            - name: frontend-storage
+              mountPath: /usr/share/nginx/html
+      containers:
+        - name: frontend
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: frontend-storage
+              mountPath: /usr/share/nginx/html
